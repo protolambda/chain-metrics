@@ -1,8 +1,13 @@
 package chain_metrics
 
 import (
+	"context"
 	"fmt"
+	"github.com/ethereum-optimism/optimism/op-node/client"
+	"github.com/ethereum-optimism/optimism/op-node/sources"
+	"github.com/ethereum/go-ethereum/log"
 	"sort"
+	"time"
 )
 
 type DBConfig struct {
@@ -22,22 +27,6 @@ type ChainConfig struct {
 type Config struct {
 	DB     DBConfig                `yaml:"db"`
 	Chains map[string]*ChainConfig `yaml:"chains"`
-}
-
-type BeaconEra struct {
-	// TODO era-store
-}
-
-type BeaconAPI struct {
-	// TODO eth2 api client
-}
-
-type EthRPC struct {
-	// TODO ethclient
-}
-
-type OpRPC struct {
-	// TODO rollup client
 }
 
 type ChainType string
@@ -60,7 +49,13 @@ func ParseChainType(name string) (ChainType, error) {
 type Chain struct {
 	Name string
 	Type ChainType
-	// TODO APIs
+
+	// TODO beacon-era
+	// TODO beacon-api
+	EthRPC client.RPC
+	EthCl  *sources.EthClient
+	OpRPC  *sources.RollupClient
+
 	L1      *Chain
 	MinTime uint64
 }
@@ -71,7 +66,20 @@ type System struct {
 	Chains []*Chain
 }
 
-func NewSystem(cfg *Config) (*System, error) {
+var defaultEthClConfig = &sources.EthClientConfig{
+	ReceiptsCacheSize:     200,
+	TransactionsCacheSize: 200,
+	HeadersCacheSize:      200,
+	PayloadsCacheSize:     200,
+	MaxRequestsPerBatch:   20,
+	MaxConcurrentRequests: 10,
+	TrustRPC:              true,
+	MustBePostMerge:       false,
+	RPCProviderKind:       sources.RPCKindBasic,
+	MethodResetDuration:   time.Minute,
+}
+
+func NewSystem(ctx context.Context, log log.Logger, cfg *Config) (*System, error) {
 	byName := make(map[string]*Chain)
 	for name, chCfg := range cfg.Chains {
 		typ, err := ParseChainType(chCfg.Type)
@@ -84,6 +92,32 @@ func NewSystem(cfg *Config) (*System, error) {
 			Type:    typ,
 			MinTime: chCfg.MinTime,
 		}
+		if typ == EthereumChain || typ == OPStackChain {
+			if chCfg.EthRPC == "" {
+				return nil, fmt.Errorf("eth-like chain %s needs eth-rpc", name)
+			}
+			ethRPC, err := client.NewRPC(ctx, log, chCfg.EthRPC)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create eth RPC: %w", err)
+			}
+			ch.EthRPC = ethRPC
+			ethCl, err := sources.NewEthClient(ethRPC, log, nil, defaultEthClConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create eth client: %w", err)
+			}
+			ch.EthCl = ethCl
+		}
+		if typ == OPStackChain {
+			if chCfg.OpRPC == "" {
+				return nil, fmt.Errorf("op-stack chain %s needs op-rpc", name)
+			}
+			rolRPC, err := client.NewRPC(ctx, log, chCfg.OpRPC)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create op-RPC: %w", err)
+			}
+			ch.OpRPC = sources.NewRollupClient(rolRPC)
+		}
+
 		byName[name] = ch
 	}
 	for name, chCfg := range cfg.Chains {
