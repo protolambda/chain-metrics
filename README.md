@@ -102,11 +102,11 @@ chain-metrics live
 
 ### Reorg handling
 
-Time-series data is labeled with the L1 beacon epoch:
-`epoch=%d`: If a reorg is detected, the invalidated data can be deleted by selecting by `epoch`.
+Time-series data is labeled with `timestamp / (60*60)`: `mh` ("metrics hour")
+If a reorg is detected, the invalidated data can be deleted by selecting by `mh`.
 VictoriaMetrics does support merging/deletion of time-series, but not partial merges/deletion.
 
-To avoid high-cardinality, finalized epochs can be merged into a single time-series.
+To avoid high-cardinality, finalized data can be merged into a single time-series.
 
 A retention-period can be configured in VictoriaMetrics to prune old data, even though only a partial time-series.
 

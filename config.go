@@ -1,4 +1,4 @@
-package chain_metrics
+package main
 
 import (
 	"context"
@@ -138,4 +138,11 @@ func NewSystem(ctx context.Context, log log.Logger, cfg *Config) (*System, error
 		return sys.Chains[i].Name < sys.Chains[j].Name
 	})
 	return sys, nil
+}
+
+func (s *System) backfill(startTimestamp uint64, endTimestamp uint64) error {
+	// TODO single-chain backfills
+	// TODO multi-chain backfills
+
+	return nil
 }
