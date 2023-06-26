@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
+	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"math/big"
@@ -229,6 +232,56 @@ var RollupDataHistogram = func(chCfg *params.ChainConfig) AggregateMetric[*types
 		0, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000,
 	}, func(bl *types.Block, tx *types.Transaction) float64 {
 		return float64(tx.RollupDataGas().DataGas(bl.Time(), chCfg))
+	})
+}
+
+func MakeCalldataStats(l1ChId uint64) AggregateMetric[*types.Block] {
+	inboxes, ok := InboxesByL1[l1ChId]
+	if !ok {
+		panic(fmt.Errorf("unknown L1: %d", l1ChId))
+	}
+	addrs := make([]common.Address, len(inboxes))
+	addrToIndex := make(map[common.Address]int)
+	for addr := range inboxes {
+		addrToIndex[addr] = len(addrs)
+		addrs = append(addrs, addr)
+	}
+	names := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		names = append(names, inboxes[addr].Name)
+	}
+	names = append(names, "contract deploys", "unknown method", "other")
+
+	return ParametrizedMetric[*types.Block]("calldata_txs", "inbox", names, func(elem *types.Block, dest []float64) error {
+		for _, tx := range elem.Transactions() {
+			to := tx.To()
+			if to == nil {
+				// count as contract-deploy
+				dest[len(dest)-3] += float64(tx.Size())
+				continue
+			}
+			inbox, ok := inboxes[*to]
+			if !ok {
+				// count as other
+				dest[len(dest)-1] += float64(tx.Size())
+				continue
+			}
+			found := len(inbox.MethodSig) == 0
+			for _, sig := range inbox.MethodSig {
+				if bytes.HasPrefix(tx.Data(), sig[:]) {
+					found = true
+					break
+				}
+			}
+			if found {
+				inboxIndex := addrToIndex[*to]
+				dest[inboxIndex] += float64(tx.Size())
+			} else {
+				// count as unknown method
+				dest[len(dest)-2] += float64(tx.Size())
+			}
+		}
+		return nil
 	})
 }
 

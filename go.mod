@@ -3,7 +3,7 @@ module github.com/protolambda/chain-metrics
 go 1.20
 
 require (
-	github.com/ethereum-optimism/optimism v1.0.9
+	github.com/ethereum-optimism/optimism v1.0.10-0.20230625181922-15660862779d
 	github.com/ethereum/go-ethereum v1.11.6
 )
 
@@ -43,7 +43,7 @@ require (
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
 	github.com/libp2p/go-libp2p v0.25.1 // indirect
-	github.com/libp2p/go-libp2p-pubsub v0.9.0 // indirect
+	github.com/libp2p/go-libp2p-pubsub v0.9.3 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
