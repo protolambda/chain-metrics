@@ -15,13 +15,11 @@ type DBConfig struct {
 }
 
 type ChainConfig struct {
-	BeaconEra string `yaml:"beacon_era"`
-	BeaconAPI string `yaml:"beacon_api"`
-	EthRPC    string `yaml:"eth_rpc"`
-	OpRPC     string `yaml:"op_rpc"`
-	L1        string `yaml:"l1"`
-	Type      string `yaml:"type"`
-	MinTime   uint64 `yaml:"min_time"`
+	EthRPC  string `yaml:"eth_rpc"`
+	OpRPC   string `yaml:"op_rpc"`
+	L1      string `yaml:"l1"`
+	Type    string `yaml:"type"`
+	MinTime uint64 `yaml:"min_time"`
 }
 
 type Config struct {
@@ -50,11 +48,8 @@ type Chain struct {
 	Name string
 	Type ChainType
 
-	// TODO beacon-era
-	// TODO beacon-api
 	EthRPC client.RPC
 	EthCl  *sources.EthClient
-	OpRPC  *sources.RollupClient
 
 	L1      *Chain
 	MinTime uint64
@@ -107,16 +102,6 @@ func NewSystem(ctx context.Context, log log.Logger, cfg *Config) (*System, error
 			}
 			ch.EthCl = ethCl
 		}
-		if typ == OPStackChain {
-			if chCfg.OpRPC == "" {
-				return nil, fmt.Errorf("op-stack chain %s needs op-rpc", name)
-			}
-			rolRPC, err := client.NewRPC(ctx, log, chCfg.OpRPC)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create op-RPC: %w", err)
-			}
-			ch.OpRPC = sources.NewRollupClient(rolRPC)
-		}
 
 		byName[name] = ch
 	}
@@ -138,11 +123,4 @@ func NewSystem(ctx context.Context, log log.Logger, cfg *Config) (*System, error
 		return sys.Chains[i].Name < sys.Chains[j].Name
 	})
 	return sys, nil
-}
-
-func (s *System) backfill(startTimestamp uint64, endTimestamp uint64) error {
-	// TODO single-chain backfills
-	// TODO multi-chain backfills
-
-	return nil
 }
