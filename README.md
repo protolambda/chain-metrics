@@ -1,5 +1,7 @@
 # Chain metrics
 
+**experimental, this is not prod-ready yet**
+
 Onchain time-series metrics service.
 
 Supported chains:

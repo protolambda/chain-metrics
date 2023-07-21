@@ -34,6 +34,7 @@ func inbox(name string, methodsig ...string) Inbox {
 	return out
 }
 
+// TODO: we also have to check the batch-sender, since some inboxes are being used by multiple chains (misconfigured alt-op-stack ones)
 var EthMainnetRollupInboxes = map[common.Address]Inbox{
 	chaincfg.Mainnet.BatchInboxAddress:                                inbox("mainnet op"),
 	common.HexToAddress("0x1c479675ad559dc151f6ec7ed3fbf8cee79582b6"): inbox("mainnet arb one sequencer inbox", "0x8f111f3c"),
