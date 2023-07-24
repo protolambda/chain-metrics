@@ -62,13 +62,13 @@ Types:
 
 A `min_time` can be specified to enforce a lower-bound range, to ignore any legacy / unavailable history.
 
-### `beacon_era`
+### `beacon_era` (planned)
 
 An [Era-store](https://nimbus.guide/era-store.html) may optionally be used to quickly read L1 chain-data,
 instead of fetching the blocks through `eth_rpc` and `beacon_api`.
 This is recommended when backfilling historical data.
 
-### `beacon_api`
+### `beacon_api` (planned)
 
 A Beacon-API may be used for `ethereum`
 
@@ -81,7 +81,7 @@ Some metrics rely on receipts data. `debug_getRawReceipts` should be open to rea
 
 Used to retrieve the rollup-config of the OP chain.
 
-## CSV backfill into VictoriaMetrics
+## CSV backfill into VictoriaMetrics (planned)
 
 Historical data can be generated and inserted into victoria metrics:
 ```
@@ -90,13 +90,13 @@ chain-metrics backfill --start-time=... --end-time=...
 This happens in batches, through the CSV data-insertion endpoint.
 https://github.com/VictoriaMetrics/VictoriaMetrics#how-to-import-csv-data
 
-## CSV dump
+## CSV dump (planned)
 
 ```
 chain-metrics csv --start-time=... --end-time=...
 ```
 
-## Live update into VictoriaMetrics
+## Live update into VictoriaMetrics (planned)
 
 ```
 chain-metrics live

@@ -312,7 +312,6 @@ var EthMetrics = func(chCfg *params.ChainConfig) AggregateMetric[*BlockWithRecei
 				BlockTxTypeUsageMetric,
 				PriorityFeeHistogram,
 				TxSizeHistogram,
-				RollupDataHistogram(chCfg),
 			),
 		),
 		BlockTxStatus,
@@ -320,6 +319,18 @@ var EthMetrics = func(chCfg *params.ChainConfig) AggregateMetric[*BlockWithRecei
 		TxGasUsageHistogram,
 		TxFeeHistogram,
 		BlockTxLogsHistogram,
+	)
+}
+
+var OPMetrics = func(chCfg *params.ChainConfig) AggregateMetric[*BlockWithReceipts] {
+	return CombineAggregates[*BlockWithReceipts](
+		EthMetrics(chCfg),
 		BlockTxL1CostHistogram,
+		TransformAggregate[*types.Block, *BlockWithReceipts](
+			func(b *BlockWithReceipts) *types.Block {
+				return b.Block
+			},
+			RollupDataHistogram(chCfg),
+		),
 	)
 }

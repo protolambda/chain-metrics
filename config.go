@@ -51,8 +51,14 @@ type Chain struct {
 	EthRPC client.RPC
 	EthCl  *sources.EthClient
 
+	OpCl *sources.RollupClient
+
 	L1      *Chain
 	MinTime uint64
+
+	Buffer chan *BlockWithReceipts
+
+	// TODO ring-buffer db of past written blocks
 }
 
 type System struct {
@@ -86,6 +92,7 @@ func NewSystem(ctx context.Context, log log.Logger, cfg *Config) (*System, error
 			Name:    name,
 			Type:    typ,
 			MinTime: chCfg.MinTime,
+			Buffer:  make(chan *BlockWithReceipts, 100), // TODO buffer size
 		}
 		if typ == EthereumChain || typ == OPStackChain {
 			if chCfg.EthRPC == "" {
@@ -101,6 +108,16 @@ func NewSystem(ctx context.Context, log log.Logger, cfg *Config) (*System, error
 				return nil, fmt.Errorf("failed to create eth client: %w", err)
 			}
 			ch.EthCl = ethCl
+		}
+		if typ == OPStackChain {
+			if chCfg.OpRPC == "" {
+				return nil, fmt.Errorf("op-stack chain %s needs op-rpc", name)
+			}
+			opRPC, err := client.NewRPC(ctx, log, chCfg.OpRPC)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create op RPC: %w", err)
+			}
+			ch.OpCl = sources.NewRollupClient(opRPC)
 		}
 
 		byName[name] = ch
